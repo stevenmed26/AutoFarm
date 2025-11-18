@@ -1,0 +1,36 @@
+# docker-compose.yml
+version: "3.9"
+
+services:
+  orchestrator:
+    build:
+      context: .
+      dockerfile: ./deployments/docker/Dockerfile.orchestrator
+    container_name: autofarm-orchestrator
+    environment:
+      # Node worker gRPC address (service name + port)
+      WORKER_GRPC_ADDR: node:50052
+    ports:
+      - "50051:50051"
+    depends_on:
+      - node
+
+  node:
+    build:
+      context: .
+      dockerfile: ./deployments/docker/Dockerfile.node
+    container_name: autofarm-node
+    ports:
+      - "50052:50052"
+
+  api:
+    build:
+      context: .
+      dockerfile: ./deployments/docker/Dockerfile.api
+    container_name: autofarm-api
+    environment:
+      ORCHESTRATOR_GRPC_ADDR: orchestrator:50051
+    ports:
+      - "8080:8080"
+    depends_on:
+      - orchestrator

@@ -1,0 +1,141 @@
+// internal/proto/simulation.proto
+syntax = "proto3";
+
+package autofarm.simulation;
+
+option go_package = "github.com/stevenmediterraneo/autofarm/internal/proto/simulationpb";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+message SimulationConfig {
+  string name          = 1;
+  uint32 entity_count  = 2;  // number of robots/agents
+  uint32 tick_rate_ms  = 3;  // tick interval in milliseconds
+  string scenario_type = 4;  // e.g. "harvest", "patrol", etc.
+}
+
+message Simulation {
+  autofarm.common.SimulationId id   = 1;
+  SimulationConfig             config = 2;
+  autofarm.common.SimulationStatus status = 3;
+  google.protobuf.Timestamp    created_at = 4;
+  google.protobuf.Timestamp    started_at = 5;
+  google.protobuf.Timestamp    ended_at   = 6;
+}
+
+// Request to create a simulation (from API to Orchestrator)
+message CreateSimulationRequest {
+  SimulationConfig config = 1;
+}
+
+message CreateSimulationResponse {
+  Simulation simulation = 1;
+}
+
+// Lifecycle control
+message StartSimulationRequest {
+  autofarm.common.SimulationId id = 1;
+}
+
+message StartSimulationResponse {
+  Simulation simulation = 1;
+}
+
+message PauseSimulationRequest {
+  autofarm.common.SimulationId id = 1;
+}
+
+message PauseSimulationResponse {
+  Simulation simulation = 1;
+}
+
+message StopSimulationRequest {
+  autofarm.common.SimulationId id = 1;
+}
+
+message StopSimulationResponse {
+  Simulation simulation = 1;
+}
+
+message GetSimulationRequest {
+  autofarm.common.SimulationId id = 1;
+}
+
+message GetSimulationResponse {
+  Simulation simulation = 1;
+}
+
+// Tick-level messages
+
+message EntityState {
+  uint64 entity_id = 1;
+
+  // position
+  double x = 2;
+  double y = 3;
+
+  // velocity
+  double vx = 4;
+  double vy = 5;
+
+  // battery/energy percentage (0–100)
+  double battery = 6;
+
+  // opaque state, e.g. "idle", "moving", "working"
+  string status = 7;
+}
+
+// What the orchestrator sends to workers per tick
+message SimulationTickRequest {
+  autofarm.common.SimulationId simulation_id = 1;
+
+  // monotonically increasing tick index
+  uint64 tick = 2;
+
+  // subset of entity ids this worker should process
+  repeated uint64 entity_ids = 3;
+
+  // config snapshot for this simulation (duplicated for stateless workers)
+  SimulationConfig config = 4;
+
+  google.protobuf.Timestamp scheduled_at = 5;
+}
+
+// What workers send back to orchestrator
+message SimulationTickResult {
+  autofarm.common.SimulationId simulation_id = 1;
+  uint64 tick = 2;
+
+  // fully updated entity state for this worker's partition
+  repeated EntityState entities = 3;
+
+  // per-worker metrics
+  double compute_ms = 4;
+}
+
+// Aggregated state that the orchestrator pushes toward the dashboard layer
+message AggregatedTick {
+  autofarm.common.SimulationId simulation_id = 1;
+  uint64 tick = 2;
+
+  repeated EntityState entities = 3;
+
+  // simple metrics for the whole simulation at this tick
+  double avg_compute_ms = 4;
+  uint32 worker_count   = 5;
+
+  google.protobuf.Timestamp completed_at = 6;
+}
+
+// RPC service exposed by the Orchestrator (called by API + maybe internal tools)
+service SimulationService {
+  rpc CreateSimulation (CreateSimulationRequest) returns (CreateSimulationResponse);
+  rpc StartSimulation  (StartSimulationRequest)  returns (StartSimulationResponse);
+  rpc PauseSimulation  (PauseSimulationRequest)  returns (PauseSimulationResponse);
+  rpc StopSimulation   (StopSimulationRequest)   returns (StopSimulationResponse);
+  rpc GetSimulation    (GetSimulationRequest)    returns (GetSimulationResponse);
+
+  rpc StreamAggregatedTicks (StreamAggregatedTicksRequest)
+      returns (stream AggregatedTick);
+}

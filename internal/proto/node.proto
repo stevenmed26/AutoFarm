@@ -1,0 +1,44 @@
+// internal/proto/node.proto
+syntax = "proto3";
+
+package autofarm.node;
+
+option go_package = "github.com/stevenmediterraneo/autofarm/internal/proto/nodepb";
+
+import "simulation.proto";
+import "common.proto";
+
+// Request from orchestrator to a single worker for a batch of ticks.
+// We can use a streaming RPC for efficiency.
+message WorkerTickRequest {
+  autofarm.common.SimulationId simulation_id = 1;
+  uint64 tick = 2;
+
+  // partition this worker is responsible for (e.g. "0/4")
+  uint32 partition_index = 3;
+  uint32 partition_total = 4;
+
+  // subset of entities owned by this worker
+  repeated uint64 entity_ids = 5;
+
+  autofarm.simulation.SimulationConfig config = 6;
+}
+
+// Response from worker with updated states for its partition.
+message WorkerTickResponse {
+  autofarm.common.SimulationId simulation_id = 1;
+  uint64 tick = 2;
+
+  repeated autofarm.simulation.EntityState entities = 3;
+
+  // worker-local metrics
+  double compute_ms = 4;
+}
+
+// Node worker service
+service NodeWorkerService {
+  // Bi-directional streaming RPC:
+  // Orchestrator streams WorkerTickRequest messages, worker responds with WorkerTickResponse messages.
+  rpc RunWorkerTicks (stream WorkerTickRequest)
+      returns (stream WorkerTickResponse);
+}

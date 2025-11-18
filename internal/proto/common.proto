@@ -1,0 +1,20 @@
+// internal/proto/common.proto
+syntax = "proto3";
+
+package autofarm.common;
+
+option go_package = "github.com/stevenmediterraneo/autofarm/internal/proto/commonpb";
+
+enum SimulationStatus {
+  SIMULATION_STATUS_UNSPECIFIED = 0;
+  SIMULATION_STATUS_CREATED     = 1;
+  SIMULATION_STATUS_RUNNING     = 2;
+  SIMULATION_STATUS_PAUSED      = 3;
+  SIMULATION_STATUS_COMPLETED   = 4;
+  SIMULATION_STATUS_STOPPED     = 5;
+  SIMULATION_STATUS_FAILED      = 6;
+}
+
+message SimulationId {
+  string value = 1;
+}
