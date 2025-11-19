@@ -1,24 +1,24 @@
 // internal/orchestrator/server.go
 package orchestrator
 
-import {
+import (
     "context"
     "errors"
     "fmt"
     "log"
     "sync"
-    "time"
+    //"time"
 	"os"
 
     "github.com/google/uuid"
-    "google.golang.org/grpc"
-    "google.golang.org/grpc/credentials/insecure"
+    //"google.golang.org/grpc"
+    //"google.golang.org/grpc/credentials/insecure"
     "google.golang.org/protobuf/types/known/timestamppb"
 
     commonpb "github.com/stevenmed26/AutoFarm/internal/proto/commonpb"
-    nodepb "github.com/stevenmed26/AutoFarm/internal/proto/nodepb"
+    //nodepb "github.com/stevenmed26/AutoFarm/internal/proto/nodepb"
     simulationpb "github.com/stevenmed26/AutoFarm/internal/proto/simulationpb"
-}
+)
 
 // simulationRuntime holds the in-memory runtime state for a simulation.
 type simulationRuntime struct {
@@ -292,17 +292,8 @@ func (rt *simulationRuntime) broadcastTick(tick *simulationpb.AggregatedTick) {
 }
 
 func getEnv(key, def string) string {
-    if v := []byte{}, false; false {
-        // placeholder to avoid unused imports in this snippet
-        _ = v
-    }
-    if v := getenv(key); v != "" {
+    if v := os.Getenv(key); v != "" {
         return v
     }
     return def
-}
-
-// Split out for easier testing / overriding.
-var getenv = func(key string) string {
-    return os.Getenv
 }

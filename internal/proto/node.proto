@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package autofarm.node;
 
-option go_package = "github.com/stevenmediterraneo/autofarm/internal/proto/nodepb";
+option go_package = "github.com/stevenmed26/AutoFarm/internal/proto/nodepb";
 
 import "simulation.proto";
 import "common.proto";

@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package autofarm.simulation;
 
-option go_package = "github.com/stevenmediterraneo/autofarm/internal/proto/simulationpb";
+option go_package = "github.com/stevenmed26/AutoFarm/internal/proto/simulationpb";
 
 import "google/protobuf/timestamp.proto";
 import "common.proto";
@@ -40,6 +40,10 @@ message StartSimulationRequest {
 
 message StartSimulationResponse {
   Simulation simulation = 1;
+}
+
+message StreamAggregatedTicksRequest {
+  autofarm.common.SimulationId id = 1;
 }
 
 message PauseSimulationRequest {
@@ -136,6 +140,5 @@ service SimulationService {
   rpc StopSimulation   (StopSimulationRequest)   returns (StopSimulationResponse);
   rpc GetSimulation    (GetSimulationRequest)    returns (GetSimulationResponse);
 
-  rpc StreamAggregatedTicks (StreamAggregatedTicksRequest)
-      returns (stream AggregatedTick);
+  rpc StreamAggregatedTicks (StreamAggregatedTicksRequest) returns (stream AggregatedTick);
 }

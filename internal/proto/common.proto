@@ -3,7 +3,7 @@ syntax = "proto3";
 
 package autofarm.common;
 
-option go_package = "github.com/stevenmediterraneo/autofarm/internal/proto/commonpb";
+option go_package = "github.com/stevenmed26/AutoFarm/internal/proto/commonpb";
 
 enum SimulationStatus {
   SIMULATION_STATUS_UNSPECIFIED = 0;
