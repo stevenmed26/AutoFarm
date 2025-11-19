@@ -9,28 +9,31 @@ import (
 
 type Server struct {
 	simClient simulationpb.SimulationServiceClient
-	hub       *Hub
 }
 
 func NewServer(simClient simulationpb.SimulationServiceClient) *Server {
 	return &Server{
 		simClient: simClient,
-		hub:       NewHub(),
 	}
 }
 
-// RegisterRoutes wires up all HTTP and WebSocket endpoints.
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
-	// REST
-	mux.HandleFunc("/simulations", s.handleSimulations)                  // POST /simulations
-	mux.HandleFunc("/simulations/", s.handleSimulationByID)              // POST/GET /simulations/{id}/...
+	// REST API
+	mux.HandleFunc("/simulations", s.handleSimulations)
+	mux.HandleFunc("/simulations/", s.handleSimulationByID)
 
-	// WebSocket
-	mux.HandleFunc("/ws/simulations/", s.handleSimulationWebSocket)      // GET /ws/simulations/{id}
+	// WebSocket stream for dashboard
+	mux.HandleFunc("/ws/simulations/", s.handleSimulationWebSocket)
 
-	// Optionally: health check
+	// Health check
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+
+	// Static dashboard (served from ./web)
+	// This should be last so more specific paths like /simulations don't get shadowed.
+	fileServer := http.FileServer(http.Dir("web"))
+	mux.Handle("/", fileServer)
 }
+

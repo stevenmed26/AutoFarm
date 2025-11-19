@@ -1,0 +1,267 @@
+<!-- web/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AutoFarm Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0b1020;
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #1f2933;
+      background: #111827;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.3rem;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 16px;
+      padding: 16px 24px 24px;
+    }
+
+    .panel {
+      background: #111827;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      border: 1px solid #1f2933;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      color: #9ca3af;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #f9fafb;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #0891b2;
+      color: #e5faff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(8,145,178,0.35);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+    }
+
+    button:hover {
+      background: #06b6d4;
+      box-shadow: 0 15px 35px rgba(6,182,212,0.45);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(15,118,110,0.55);
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+      min-height: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #111827;
+      border: 1px solid #1f2933;
+      margin-top: 6px;
+      gap: 6px;
+    }
+
+    .pill span.key {
+      color: #6b7280;
+    }
+
+    .pill span.value {
+      color: #e5e7eb;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    /* Canvas container */
+    .canvas-container {
+      position: relative;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #canvas {
+      flex: 1;
+      border-radius: 12px;
+      border: 1px solid #1f2933;
+      background: radial-gradient(circle at top, #020617, #020617 40%, #020617 80%);
+      background-color: #020617;
+    }
+
+    .metrics {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .metrics span {
+      opacity: 0.9;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #1f2933;
+      font-size: 0.75rem;
+      gap: 5px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .badge-dot.bad {
+      background: #f97373;
+    }
+
+    footer {
+      padding: 8px 24px 14px;
+      font-size: 0.75rem;
+      color: #6b7280;
+      border-top: 1px solid #1f2933;
+      background: #020617;
+    }
+
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      .canvas-container {
+        min-height: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AutoFarm — Distributed Simulation Dashboard</h1>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Simulation Control</h2>
+
+      <label for="sim-name">Name</label>
+      <input id="sim-name" type="text" value="Demo Simulation" />
+
+      <label for="sim-entities">Entities</label>
+      <input id="sim-entities" type="number" min="1" max="5000" value="200" />
+
+      <label for="sim-tick">Tick rate (ms)</label>
+      <input id="sim-tick" type="number" min="10" max="1000" value="50" />
+
+      <label for="sim-scenario">Scenario</label>
+      <select id="sim-scenario">
+        <option value="harvest">Harvest</option>
+        <option value="patrol">Patrol</option>
+        <option value="coverage">Coverage</option>
+      </select>
+
+      <button id="btn-start">
+        <span>🚀</span>
+        <span>Create & Start Simulation</span>
+      </button>
+
+      <div class="status" id="status"></div>
+
+      <div class="pill" id="sim-pill" style="display:none;">
+        <span class="key">Simulation ID:</span>
+        <span class="value" id="sim-id"></span>
+      </div>
+
+      <div class="pill" id="ws-pill" style="display:none; margin-top:6px;">
+        <span class="key">WebSocket:</span>
+        <span class="value" id="ws-status"></span>
+      </div>
+    </section>
+
+    <section class="panel canvas-container">
+      <canvas id="canvas" width="900" height="600"></canvas>
+      <div class="metrics" id="metrics">
+        <span class="badge">
+          <span class="badge-dot"></span>
+          <span id="metric-entities">Entities: 0</span>
+        </span>
+        <span class="badge">
+          <span class="badge-dot"></span>
+          <span id="metric-tick">Tick: 0</span>
+        </span>
+        <span class="badge">
+          <span class="badge-dot"></span>
+          <span id="metric-latency">Latency: -- ms</span>
+        </span>
+        <span class="badge">
+          <span class="badge-dot"></span>
+          <span id="metric-compute">Avg compute: -- ms</span>
+        </span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    AutoFarm · gRPC · WebSockets · Go · Docker · AWS-ready
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
