@@ -39,3 +39,25 @@
 
 # debug information files
 *.dwo
+
+# Go build output
+/bin/
+dist/
+*.out
+*.bin
+
+# Go tools
+coverage.out
+
+# Logs
+*.log
+
+# OS/Editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.tmp
+
+# Docker
+docker-data/
