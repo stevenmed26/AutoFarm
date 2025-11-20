@@ -4,28 +4,28 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/stevenmed26/AutoFarm/internal/api"
+	"github.com/stevenmed26/AutoFarm/internal/config"
 	simulationpb "github.com/stevenmed26/AutoFarm/internal/proto/simulationpb"
 )
 
 func main() {
-	httpAddr := getEnv("API_HTTP_ADDR", ":8080")
-	orchestratorAddr := getEnv("ORCHESTRATOR_GRPC_ADDR", "localhost:50051")
+	cfg := config.LoadAPIConfig()
+
 
 	// Set up gRPC client to orchestrator.
 	conn, err := grpc.Dial(
-		orchestratorAddr,
+		cfg.OrchestratorGRPCAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithBlock(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to orchestrator at %s: %v", orchestratorAddr, err)
+		log.Fatalf("failed to connect to orchestrator at %s: %v", cfg.OrchestratorGRPCAddr, err)
 	}
 	defer conn.Close()
 
@@ -38,14 +38,14 @@ func main() {
 	server.RegisterRoutes(mux)
 
 	srv := &http.Server{
-		Addr:         httpAddr,
+		Addr:         cfg.HTTPAddr,
 		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("API server listening on %s (orchestrator: %s)", httpAddr, orchestratorAddr)
+	log.Printf("API server listening on %s (orchestrator: %s)", cfg.HTTPAddr, cfg.OrchestratorGRPCAddr)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("HTTP server failed: %v", err)
 	}

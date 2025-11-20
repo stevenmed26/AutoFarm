@@ -8,7 +8,6 @@ import (
     "log"
     "sync"
     //"time"
-	"os"
 
     "github.com/google/uuid"
     //"google.golang.org/grpc"
@@ -42,11 +41,11 @@ type SimulationServer struct {
     workerAddr string
 }
 
-func NewSimulationServer() *SimulationServer {
+func NewSimulationServer(workerAddr string) *SimulationServer {
     return &SimulationServer{
         sims:       make(map[string]*simulationpb.Simulation),
         runtimes:   make(map[string]*simulationRuntime),
-        workerAddr: getEnv("WORKER_GRPC_ADDR", "localhost:50052"),
+        workerAddr: workerAddr,
     }
 }
 
@@ -289,11 +288,4 @@ func (rt *simulationRuntime) broadcastTick(tick *simulationpb.AggregatedTick) {
             // Drop if subscriber is slow; protect runtime.
         }
     }
-}
-
-func getEnv(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
 }
