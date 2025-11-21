@@ -2,6 +2,20 @@
 version: "3.9"
 
 services:
+  postgres:
+    image: postgres:16
+    container_name: autofarm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: autofarm
+      POSTGRES_PASSWORD: autofarm
+      POSTGRES_DB: autofarm
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deployments/db/migrations:/docker-entrypoint-initdb.d
+
   orchestrator:
     build:
       context: .
@@ -10,10 +24,13 @@ services:
     environment:
       # Node worker gRPC address (service name + port)
       WORKER_GRPC_ADDR: node:50052
+      ORCHESTRATOR_DB_DSN: postgres://autofarm:autofarm@postgres:5432/autofarm?sslmode=disable
+      ORCHESTRATOR_GRPC_ADDR: :50051
     ports:
       - "50051:50051"
     depends_on:
       - node
+      - postgres
 
   node:
     build:
@@ -34,3 +51,6 @@ services:
       - "8080:8080"
     depends_on:
       - orchestrator
+
+volumes:
+  postgres_data:

@@ -7,13 +7,13 @@ import (
     "fmt"
     "log"
     "sync"
-    //"time"
-	"os"
+    "time"
 
     "github.com/google/uuid"
     //"google.golang.org/grpc"
     //"google.golang.org/grpc/credentials/insecure"
     "google.golang.org/protobuf/types/known/timestamppb"
+    "github.com/stevenmed26/AutoFarm/internal/store"
 
     commonpb "github.com/stevenmed26/AutoFarm/internal/proto/commonpb"
     //nodepb "github.com/stevenmed26/AutoFarm/internal/proto/nodepb"
@@ -40,13 +40,15 @@ type SimulationServer struct {
     sims      map[string]*simulationpb.Simulation
     runtimes  map[string]*simulationRuntime
     workerAddr string
+    store     *store.SimulationStore
 }
 
-func NewSimulationServer() *SimulationServer {
+func NewSimulationServer(workerAddr string, store *store.SimulationStore) *SimulationServer {
     return &SimulationServer{
         sims:       make(map[string]*simulationpb.Simulation),
         runtimes:   make(map[string]*simulationRuntime),
-        workerAddr: getEnv("WORKER_GRPC_ADDR", "localhost:50052"),
+        workerAddr: workerAddr,
+        store:      store,
     }
 }
 
@@ -83,6 +85,12 @@ func (s *SimulationServer) CreateSimulation(
     s.mu.Lock()
     s.sims[id] = sim
     s.runtimes[id] = rt
+
+    ctxInsert, cancel := context.WithTimeout(ctx, 3*time.Second)
+    defer cancel()
+    if err := s.store.InsertSimulation(ctxInsert, sim); err != nil {
+        log.Printf("warning: failed to persist simulation %s: %v", id, err)
+    }
     s.mu.Unlock()
 
     return &simulationpb.CreateSimulationResponse{
@@ -115,6 +123,12 @@ func (s *SimulationServer) StartSimulation(
     sim.Status = commonpb.SimulationStatus_SIMULATION_STATUS_RUNNING
     if sim.StartedAt == nil {
         sim.StartedAt = timestamppb.Now()
+    }
+
+    ctxUpd, cancel := context.WithTimeout(ctx, 3*time.Second)
+    defer cancel()
+    if err := s.store.UpdateSimulationStatus(ctxUpd, sim); err != nil {
+        log.Printf("warning: failed to update simulation %s: %v", sim.GetId().GetValue(), err)
     }
 
     // Initialize entity IDs once.
@@ -155,6 +169,12 @@ func (s *SimulationServer) PauseSimulation(
 
     sim.Status = commonpb.SimulationStatus_SIMULATION_STATUS_PAUSED
 
+    ctxUpd, cancel := context.WithTimeout(ctx, 3*time.Second)
+    defer cancel()
+    if err := s.store.UpdateSimulationStatus(ctxUpd, sim); err != nil {
+        log.Printf("warning: failed to update simulation %s: %v", sim.GetId().GetValue(), err)
+    }
+
     // Stop the tick loop if running.
     if rt.cancel != nil {
         rt.cancel()
@@ -186,6 +206,12 @@ func (s *SimulationServer) StopSimulation(
 
     sim.Status = commonpb.SimulationStatus_SIMULATION_STATUS_STOPPED
     sim.EndedAt = timestamppb.Now()
+
+    ctxUpd, cancel := context.WithTimeout(ctx, 3*time.Second)
+    defer cancel()
+    if err := s.store.UpdateSimulationStatus(ctxUpd, sim); err != nil {
+        log.Printf("warning: failed to update simulation %s: %v", sim.GetId().GetValue(), err)
+    }
 
     if rt.cancel != nil {
         rt.cancel()
@@ -289,11 +315,4 @@ func (rt *simulationRuntime) broadcastTick(tick *simulationpb.AggregatedTick) {
             // Drop if subscriber is slow; protect runtime.
         }
     }
-}
-
-func getEnv(key, def string) string {
-    if v := os.Getenv(key); v != "" {
-        return v
-    }
-    return def
 }

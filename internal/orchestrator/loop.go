@@ -82,6 +82,10 @@ func (s *SimulationServer) runSimulationLoop(simID string, rt *simulationRuntime
                 CompletedAt:  timestamppb.New(time.Now()),
             }
 
+            ctxSave, cancelSave := context.WithTimeout(ctx, 2*time.Second)
+            _ = s.store.InsertTickSummary(ctxSave, agg)
+            cancelSave()
+
             rt.broadcastTick(agg)
         }
     }
