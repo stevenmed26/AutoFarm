@@ -21,8 +21,9 @@ type APIConfig struct {
 
 // OrchestratorConfig holds configuration for the orchestrator service.
 type OrchestratorConfig struct {
-	GRPCAddr      string
+	GRPCAddr       string
 	WorkerGRPCAddr string
+	DBDSN          string
 }
 
 // NodeConfig holds configuration for the node worker service.
@@ -43,6 +44,7 @@ func LoadOrchestratorConfig() OrchestratorConfig {
 	return OrchestratorConfig{
 		GRPCAddr:      getEnv("ORCHESTRATOR_GRPC_ADDR", ":50051"),
 		WorkerGRPCAddr: getEnv("WORKER_GRPC_ADDR", "localhost:50052"),
+		DBDSN:          getEnv("ORCHESTRATOR_DB_DSN", "postgres://autofarm:autofarm@postgres:5432/autofarm?sslmode=disable"),
 	}
 }
 
